@@ -207,6 +207,7 @@ class NodeWidget(QWidget, Generic[DataItemT]):
         if not self.node.in_graph:
             # indicate has been poped out of the graph
             self._removeSelf()
+            return
 
         self._updateCollapseBtnStyle(self.clp_btn)
         if self._collapsed:

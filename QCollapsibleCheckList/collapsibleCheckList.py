@@ -74,7 +74,6 @@ class CollapsibleCheckList(QWidget, Generic[DataItemT]):
             # root node
             wid = self._createNodeWid(last_node)
             self.root_node_wids.append(wid)
-            # insert above stretch
             self.vlayout.addWidget(wid)
         else:
             for wid in self.root_node_wids:
