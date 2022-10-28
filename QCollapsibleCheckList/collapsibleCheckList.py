@@ -114,11 +114,18 @@ class CollapsibleCheckList(QWidget, Generic[DataItemT]):
                 ret.append(i)
         return ret
 
+    def setItemChecked(self, data: DataItemT, status: bool):
+        assert data.dataitem_uid in self.shown_item_wids.keys(), "Invalid data"
+        self.check_status[data.dataitem_uid] = status
+        for wid in self.shown_item_wids[data.dataitem_uid]:
+            wid.setChecked(status)
+            break
+
     @overload
-    def isChecked(self, a: int) -> bool: ...
+    def isItemChecked(self, a: int) -> bool: ...
     @overload
-    def isChecked(self, a: DataItemT) -> bool: ...
-    def isChecked(self, a) -> bool:
+    def isItemChecked(self, a: DataItemT) -> bool: ...
+    def isItemChecked(self, a) -> bool:
         if isinstance(a, int):
             data = self.graph.data[a]
         else:
