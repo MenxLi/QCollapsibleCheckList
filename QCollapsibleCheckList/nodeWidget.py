@@ -199,24 +199,47 @@ class NodeWidget(QWidget, Generic[DataItemT]):
         return self._parent.shown_item_wids[self.node.value.dataitem_uid]
 
     def onNodeUpdate(self):
+        debug("update...", self)
         if not self.node.in_graph:
             # indicate has been poped out of the graph
             self.removeSelf()
             return
 
+        for wid in self.child_widgets:
+            wid.onNodeUpdate()
+
+        # may have childs added/removed
         self._updateCollapseBtnStyle(self.clp_btn)
+
+        # deal with parent here
+        # is it possible self.parent_widget was deleted earlier??
+        #       (should be impossible? because we always update child first in the recursion)
+        if self.parent_widget is None:
+            # previously no parent (as the root widget)
+            if self.node.parents:
+                # should be added as a child to someone else
+                self.removeSelf()
+                return
+        else:
+            if self.parent_widget.node.uid not in [ p.uid for p in self.node.parents ]:
+                # previous parent is not current parents
+                self.removeSelf()
+                return
+
+        # no need to deal with child if collapsed
         if self._collapsed:
             debug(f"Skipped node update - {self}")
             return
 
-        for wid in self.child_widgets:
-            wid.onNodeUpdate()
         wids_uid = [ wid.node.uid for wid in self.child_widgets ]
         childs_uid = [ c.uid for c in self.node.childs ]
+
+        # add a new child
         for c in self.node.childs:
             if c.uid not in wids_uid:
                 self._createAddChildNodeWid(c)
 
+        # removed a child
         for wid in self.child_widgets:
             if wid.node.uid not in childs_uid:
                 wid.removeSelf()

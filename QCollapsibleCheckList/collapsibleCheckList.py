@@ -85,22 +85,32 @@ class CollapsibleCheckList(QWidget, Generic[DataItemT]):
         self.shown_item_wids[node.value.dataitem_uid].append(wid)
         return wid
 
-    def addItem(self, i: DataItemT, check_status: bool = False):
+    def addItem(self, i: DataItemT, check_status: bool = False) -> bool:
+        """
+        return if successfully added item,
+        failed indicate the dataitem is already in the graph
+        """
         debug("Add item - {}".format(i))
-        self.graph.add(i)
+        if not self.graph.add(i):
+            return False
+        debug("Added item - {}".format(i))
 
         self.check_status[i.dataitem_uid] = check_status
         self.shown_item_wids.setdefault(i.dataitem_uid, [])
 
         last_node = self.graph.nodes[-1]
+        debug("current root node_wids: ", [wid.node for wid in self.root_node_wids])
         if last_node.parents == []:
             # root node
             wid = self._createNodeWid(last_node)
             self.root_node_wids.append(wid)
             self.vlayout.addWidget(wid)
-        else:
-            for wid in self.root_node_wids:
-                wid.onNodeUpdate()
+        for wid in [ w for w in self.root_node_wids ]:
+            # have to use this trick
+            # because the root node may be deleted on the way updating
+            debug("UPDATING NODE WIDGET: ", wid)
+            wid.onNodeUpdate()
+        return True
 
     def removeItem(self, i: DataItemT):
         pop_node = self.graph.remove(i)
