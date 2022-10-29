@@ -97,5 +97,6 @@ if __name__ == "__main__":
     status = [ random.random()>0.5 for s in strings]
 
     main_win = MainWindow(sds, status)
+    main_win.ccl.initData(sds)
 
     app.exec()

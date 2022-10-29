@@ -206,7 +206,7 @@ class NodeWidget(QWidget, Generic[DataItemT]):
     def onNodeUpdate(self):
         if not self.node.in_graph:
             # indicate has been poped out of the graph
-            self._removeSelf()
+            self.removeSelf()
             return
 
         self._updateCollapseBtnStyle(self.clp_btn)
@@ -224,7 +224,7 @@ class NodeWidget(QWidget, Generic[DataItemT]):
 
         for wid in self.child_widgets:
             if wid.node.uid not in childs_uid:
-                wid._removeSelf()
+                wid.removeSelf()
 
     def _createAddChildNodeWid(self, n: GraphNode) -> NodeWidget:
         wid = self._parent._createNodeWid(n).setParentNodeWidget(self)
@@ -265,14 +265,14 @@ class NodeWidget(QWidget, Generic[DataItemT]):
     def _removeChilds(self):
         for i in range(len(self.child_widgets))[::-1]:
             wid = self.child_widgets.pop(i)
-            wid._removeSelf()
+            wid.removeSelf()
         if hasattr(self, "c_frame"):
             frame: QFrame = getattr(self, "c_frame")
             self.vlayout.removeWidget(frame)
             frame.deleteLater()
             delattr(self, "c_frame")
 
-    def _removeSelf(self):
+    def removeSelf(self):
         self._removeChilds()
         # remove from global siblings
         for i in range(len(self.sibling_wids))[::-1]:
@@ -286,6 +286,11 @@ class NodeWidget(QWidget, Generic[DataItemT]):
                     p_child_wids.pop(i)
             if p_child_wids == []:
                 self.parent_widget._collapseFrame()
+        # remove from parent's root_nodes
+        for i in range(len(self._parent.root_node_wids))[::-1]:
+            wid = self._parent.root_node_wids[i]
+            if wid is self:
+                self._parent.root_node_wids.pop(i)
         self.deleteLater()
 
     def __str__(self) -> str:

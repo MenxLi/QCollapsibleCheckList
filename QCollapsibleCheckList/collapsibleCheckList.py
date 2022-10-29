@@ -7,7 +7,6 @@ from .dataModel import DataGraph, DataItemAbstract, GraphNode, DataItemT, uidT
 from PyQt6.QtWidgets import QLabel, QVBoxLayout, QWidget
 from PyQt6 import QtCore
 
-
 class CollapsibleCheckList(QWidget, Generic[DataItemT]):
 
     onCheckItem = QtCore.pyqtSignal(DataItemAbstract)
@@ -26,36 +25,50 @@ class CollapsibleCheckList(QWidget, Generic[DataItemT]):
     onUnCollapseNodeWidget = QtCore.pyqtSignal(NodeWidget)
 
     def __init__(self, parent = None, init_items: List[DataItemT] = [], init_check_status : Optional[List[bool]] = None) -> None:
-        if init_check_status is None:
-            init_check_status = [False for _ in init_items]
-        assert len(init_items) == len(init_check_status)
         super().__init__(parent)
-        #  self.setStyleSheet(r":hover{background-color: rgba(100, 100, 50, 50)}")
-
-        self.graph = DataGraph(init_items)
-        self.root_node_wids: List[NodeWidget] = []
 
         # attributes will be accessed by CheckItemWidget
         self.check_status: Dict[uidT, bool] = {}
         self.shown_item_wids: Dict[uidT, List[NodeWidget]] = {}
+        self.root_node_wids: List[NodeWidget] = []
         self._hovering_wid: Optional[NodeWidget] = None
 
+        self.initUI()
+        self.initData(init_items, init_check_status)
+    
+    def initUI(self):
+        layout = QVBoxLayout()
+        self.vlayout = NodeVlayout()
+        layout.addLayout(self.vlayout)
+        layout.addStretch()
+        self.setLayout(layout)
+    
+    def initData(self, init_items: List[DataItemT], init_check_status : Optional[List[bool]] = None):
+        if init_check_status is None:
+            init_check_status = [False for _ in init_items]
+        assert len(init_items) == len(init_check_status)
+
+        # maybe flush old data references
+        # may not clean wid if it's not attached to root node
+        if self.root_node_wids != []:
+            _t = [wid for wid in self.root_node_wids]
+            for _w in _t: 
+                _w.removeSelf()
+        self.check_status = {}
+        self._hovering_wid = None
+
+        self.graph = DataGraph(init_items)
+
         for d, status in zip(init_items, init_check_status):
+            # import pdb;pdb.set_trace()
             self.check_status[d.dataitem_uid] = status
             self.shown_item_wids[d.dataitem_uid] = []
 
-        layout = QVBoxLayout()
-        self.vlayout = NodeVlayout()
         for n in self.graph.nodes:
             if n.parents == []:
                 wid = self._createNodeWid(n)
                 self.root_node_wids.append(wid)
                 self.vlayout.addWidget(wid)
-
-        layout.addLayout(self.vlayout)
-        layout.addStretch()
-
-        self.setLayout(layout)
 
     def _createNodeWid(self, node: GraphNode[DataItemT]) -> NodeWidget[DataItemT]:
         wid = NodeWidget(self, node)
