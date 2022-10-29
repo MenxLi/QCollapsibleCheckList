@@ -108,19 +108,9 @@ class GraphNode(Generic[DataItemT]):
 
 class DataItemAbstract(ABC):
 
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__()
-        self._dataitem_uid = uuid4().hex
-
     @property
     def dataitem_uid(self) -> uidT:
-        try:
-            return uidT(self._dataitem_uid)
-        except AttributeError as e:
-            print("An error or happened: {}".format(e))
-            print("Did you forget to call DataItemAbstract.__init__()?")
-            print("exit")
-            exit()
+        return uidT(str(id(self)))
 
     @abstractmethod
     def isParentOf(self, d: DataItemAbstract) -> bool:
