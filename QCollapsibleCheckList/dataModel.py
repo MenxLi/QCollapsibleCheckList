@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List, NewType, Optional, Generic, TypeVar
+from typing import Dict, List, NewType, Optional, Generic, TypeVar
 from abc import ABC, abstractmethod
 from uuid import uuid4
 
@@ -31,6 +31,12 @@ class DataGraph(Generic[DataItemT]):
     def onDataChange(self):
         self.__update_rel_matrix()
         self.__updateNode()
+
+    def getNodeByItem(self, item: DataItemT):
+        for i in range(len(self.data)):
+            if self.data[i].dataitem_uid == item.dataitem_uid:
+                return self.nodes[i]
+        raise ValueError("Item not found in the graph")
 
     def __updateNode(self):
         nodeslist = self.__node_list

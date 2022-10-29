@@ -9,6 +9,8 @@ from PyQt6 import QtCore
 
 class CollapsibleCheckList(QWidget, Generic[DataItemT]):
 
+    MAX_UNCOLLAPSE_RECURSION_DEPTH = 20
+
     onCheckItem = QtCore.pyqtSignal(DataItemAbstract)
     onUnCheckItem = QtCore.pyqtSignal(DataItemAbstract)
 
@@ -118,7 +120,44 @@ class CollapsibleCheckList(QWidget, Generic[DataItemT]):
             return
         for wid in self.root_node_wids:
             wid.onNodeUpdate()
-        
+
+    def setCollapse(self, item: DataItemT, status: bool):
+        """
+        should not be used for circular graph
+        """
+        def _recursivly_uncollapse(it):
+            # add and test counter
+            MAX_RECURSION_DEPTH = self.MAX_UNCOLLAPSE_RECURSION_DEPTH
+            _UNCOLLAPSE_REC_COUNT = getattr(self, "_UNCOLLAPSE_REC_COUNT")
+            if _UNCOLLAPSE_REC_COUNT > MAX_RECURSION_DEPTH:
+                raise RecursionError("MAX_RECURSION_DEPTH excedeed on uncollapse widget.")
+            setattr(self, "_UNCOLLAPSE_REC_COUNT", _UNCOLLAPSE_REC_COUNT + 1)
+
+            parents = [n.value for n in self.graph.getNodeByItem(it).parents]
+            for p in parents:
+                _recursivly_uncollapse(p)
+            for wid in self.getShownWid(it):
+                if wid._collapsed:
+                    wid._unCollapseFrame()
+
+
+        if status:
+            # want to collapse it
+            if self.getShownWid(item):
+                for wid in self.getShownWid(item):
+                    if not wid._collapsed:
+                        wid._collapseFrame()
+            return
+        else:
+            # want to uncollapse it
+            # do it recursively,
+            # set a counter to stop infinite loop
+            setattr(self, "_UNCOLLAPSE_REC_COUNT", 0)
+            _recursivly_uncollapse(item)
+            delattr(self, "_UNCOLLAPSE_REC_COUNT")
+
+    def getShownWid(self, item: DataItemT):
+        return self.shown_item_wids[item.dataitem_uid]
 
     @property
     def item_hover(self) -> Optional[DataItemT]:
