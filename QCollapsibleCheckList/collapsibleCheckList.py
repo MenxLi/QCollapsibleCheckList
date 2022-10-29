@@ -4,7 +4,7 @@ from typing import Dict, Generic, List, overload,  Optional
 from .utils import debug
 from .nodeWidget import NodeWidget, NodeVlayout
 from .dataModel import DataGraph, DataItemAbstract, GraphNode, DataItemT, uidT
-from PyQt6.QtWidgets import QLabel, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QLabel, QScrollArea, QVBoxLayout, QWidget
 from PyQt6 import QtCore
 
 class CollapsibleCheckList(QWidget, Generic[DataItemT]):
@@ -38,10 +38,20 @@ class CollapsibleCheckList(QWidget, Generic[DataItemT]):
     
     def initUI(self):
         layout = QVBoxLayout()
+        container = QWidget(self)
+        container.setLayout(layout)
+
         self.vlayout = NodeVlayout()
         layout.addLayout(self.vlayout)
         layout.addStretch()
-        self.setLayout(layout)
+
+        scroll = QScrollArea(self)
+        scroll.setWidget(container)
+        scroll.setWidgetResizable(True)
+
+        _lo = QVBoxLayout()
+        _lo.addWidget(scroll)
+        self.setLayout(_lo)
     
     def initData(self, init_items: List[DataItemT], init_check_status : Optional[List[bool]] = None):
         if init_check_status is None:

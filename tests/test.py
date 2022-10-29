@@ -94,9 +94,10 @@ if __name__ == "__main__":
         "1->2->3->4",
     ]
     sds = [ StringData(s) for s in strings]
+    sds2 = [ StringData(s) for s in strings]
     status = [ random.random()>0.5 for s in strings]
 
     main_win = MainWindow(sds, status)
-    main_win.ccl.initData(sds)
+    main_win.ccl.initData(sds2)
 
     app.exec()

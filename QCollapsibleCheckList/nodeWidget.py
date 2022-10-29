@@ -65,7 +65,6 @@ class NodeWidget(QWidget, Generic[DataItemT]):
     INDENTATION = 20
     BUTTON_SIZE = (16, 16)
     LINE_TOPBOTTM_MARGIN = 0
-    MOUSE_TRACKING: bool = False
 
     class _CheckFrame(QFrame):...   # For styling
 
@@ -75,7 +74,6 @@ class NodeWidget(QWidget, Generic[DataItemT]):
         self.node = node
         self.initUI()
 
-        self.setMouseTracking(self.MOUSE_TRACKING)
         self.child_widgets: List[NodeWidget[DataItemT]] = []
         self.parent_widget: Optional[NodeWidget[DataItemT]] = parent_node_wid
 
@@ -121,9 +119,6 @@ class NodeWidget(QWidget, Generic[DataItemT]):
         #  self.select_frame.setStyleSheet(r":hover{"
         #                             "background-color: rgba(100, 200, 200, 50)"
         #                             "}")
-        self.select_frame.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Minimum)
-        self.clp_btn.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Minimum)
-        self.lbl.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Minimum)
 
         _layout = QHBoxLayout()
         _layout.setContentsMargins(0,self.LINE_TOPBOTTM_MARGIN,0,self.LINE_TOPBOTTM_MARGIN)
