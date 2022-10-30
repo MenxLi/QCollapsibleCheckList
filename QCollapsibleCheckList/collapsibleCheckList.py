@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Dict, Generic, List, overload,  Optional
+from typing import Dict, Generic, List, Literal, Tuple, TypedDict, overload,  Optional
 
 from PyQt6.QtGui import QFont
 
@@ -8,6 +8,11 @@ from .nodeWidget import NodeWidget, NodeVlayout
 from .dataModel import DataGraph, DataItemAbstract, GraphNode, DataItemT, uidT
 from PyQt6.QtWidgets import QLabel, QScrollArea, QVBoxLayout, QWidget
 from PyQt6 import QtCore
+
+class CCLConfigT(TypedDict):
+    font: Optional[QFont]
+    hover_highlight_color: Optional[str]
+    click_line: Literal["check", "fold", "none"]
 
 class CollapsibleCheckList(QWidget, Generic[DataItemT]):
 
@@ -28,9 +33,14 @@ class CollapsibleCheckList(QWidget, Generic[DataItemT]):
     onCollapseNodeWidget = QtCore.pyqtSignal(NodeWidget)
     onUnCollapseNodeWidget = QtCore.pyqtSignal(NodeWidget)
 
-    _font: Optional[QFont] = None
-
-    def __init__(self, parent = None, init_items: List[DataItemT] = [], init_check_status : Optional[List[bool]] = None) -> None:
+    def __init__(self, 
+                 parent = None, 
+                 init_items: List[DataItemT] = [], 
+                 init_check_status : Optional[List[bool]] = None,
+                 # configurations
+                 hover_highlight_color: Optional[str] = None,
+                 click_line: Literal["check", "fold", "none"] = "none",
+                 ) -> None:
         super().__init__(parent)
 
         # attributes will be accessed by CheckItemWidget
@@ -38,9 +48,15 @@ class CollapsibleCheckList(QWidget, Generic[DataItemT]):
         self.shown_item_wids: Dict[uidT, List[NodeWidget]] = {}
         self.root_node_wids: List[NodeWidget] = []
         self._hovering_wid: Optional[NodeWidget] = None
+        self.config: CCLConfigT = {
+            "font": None,
+            "hover_highlight_color": hover_highlight_color,
+            "click_line": click_line
+        }
 
         self.initUI()
         self.initData(init_items, init_check_status)
+        self.installEventFilter(self)
     
     def initUI(self):
         layout = QVBoxLayout()
@@ -92,14 +108,14 @@ class CollapsibleCheckList(QWidget, Generic[DataItemT]):
         return wid
 
     def setFont(self, a0: QFont) -> None:
-        self._font = a0
+        self.config["font"] = a0
         for v in self.shown_item_wids.values():
             for wid in v:
                 wid.setFont(a0)
         return super().setFont(a0)
 
     def getFont(self) -> Optional[QFont]:
-        return self._font
+        return self.config["font"]
 
     def addItem(self, i: DataItemT, check_status: bool = False) -> bool:
         """
@@ -201,10 +217,17 @@ class CollapsibleCheckList(QWidget, Generic[DataItemT]):
 
     def setItemChecked(self, data: DataItemT, status: bool):
         assert data.dataitem_uid in self.shown_item_wids.keys(), "Invalid data"
-        self.check_status[data.dataitem_uid] = status
         for wid in self.shown_item_wids[data.dataitem_uid]:
             wid.setChecked(status)
             break
+        # we may have set check status on wid.setChecked,
+        # but if no node wid is shown up (they are collapsed), we have to do it this way
+        if self.check_status[data.dataitem_uid] != status:
+            self.check_status[data.dataitem_uid] = status
+            if status == True:
+                self.onCheckItem.emit(data)
+            else:
+                self.onUnCheckItem.emit(data)
 
     @overload
     def isItemChecked(self, a: int) -> bool: ...
@@ -217,3 +240,14 @@ class CollapsibleCheckList(QWidget, Generic[DataItemT]):
             data = a
         return self.check_status[data.dataitem_uid]
 
+    def eventFilter(self, a0, a1: QtCore.QEvent) -> bool:
+        if a1.type() == QtCore.QEvent.Type.MouseButtonPress:
+            if a1.button() == QtCore.Qt.MouseButton.LeftButton:
+                if self.config["click_line"] == "check":
+                    if self.item_hover:
+                        self.setItemChecked(self.item_hover, not self.isItemChecked(self.item_hover))
+                elif self.config["click_line"] == "fold":
+                    if self._hovering_wid:
+                        self._hovering_wid.onCollapseClicked()
+
+        return super().eventFilter(a0, a1)

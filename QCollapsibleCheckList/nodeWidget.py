@@ -76,6 +76,7 @@ class NodeWidget(QWidget, Generic[DataItemT]):
 
         self.child_widgets: List[NodeWidget[DataItemT]] = []
         self.parent_widget: Optional[NodeWidget[DataItemT]] = parent_node_wid
+        self.installEventFilter(self)
 
     def setParentNodeWidget(self, parent_node_wid: NodeWidget[DataItemT]) -> NodeWidget:
         """
@@ -116,9 +117,10 @@ class NodeWidget(QWidget, Generic[DataItemT]):
         self.lbl.setMinimumHeight(0)
 
         self.select_frame = self._CheckFrame(self)
-        #  self.select_frame.setStyleSheet(r":hover{"
-        #                             "background-color: rgba(100, 200, 200, 50)"
-        #                             "}")
+        if self._parent.config["hover_highlight_color"]:
+            self.select_frame.setStyleSheet(":hover{"
+                                       f"background-color: {self._parent.config['hover_highlight_color']}"
+                                       "}")
 
         _layout = QHBoxLayout()
         _layout.setContentsMargins(0,self.LINE_TOPBOTTM_MARGIN,0,self.LINE_TOPBOTTM_MARGIN)
@@ -168,6 +170,7 @@ class NodeWidget(QWidget, Generic[DataItemT]):
     def onCheckChange(self, status: bool):
         self.check_status = status
         self._setSiblingWidsChecked(status)
+
         debug(f"On check change - {status}, {self}")
         debug(f"Sibling wids {self.sibling_wids}")
         debug(f"Parent item checked {self._parent.items_checked}")
@@ -180,10 +183,10 @@ class NodeWidget(QWidget, Generic[DataItemT]):
     def check_status(self, status: bool):
         old = self.check_status
         new = status
+
         item = self.node.value
         self._parent.check_status[item.dataitem_uid] = status
-        if old == new:
-            return
+
         if old == True and new == False:
             self._parent.onUnCheckItem.emit(item)
         elif old == False and new == True:
@@ -193,12 +196,12 @@ class NodeWidget(QWidget, Generic[DataItemT]):
         return self.cb.isChecked()
     
     def setChecked(self, status: bool):
+        self.check_status = status
         self.cb.setChecked(status)
-        self._setSiblingWidsChecked(status)
 
     def _setSiblingWidsChecked(self, status: bool):
         for wid in self.sibling_wids:
-            if not self is wid:
+            if not wid is self:
                 if not wid.isCBChecked() == status:
                     wid.setChecked(status)
 
