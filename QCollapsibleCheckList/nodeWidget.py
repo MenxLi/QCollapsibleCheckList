@@ -5,7 +5,7 @@ import os
 
 from .dataModel import GraphNode, DataItemT
 from PyQt6.QtWidgets import QCheckBox, QFrame, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget, QSizePolicy
-from PyQt6.QtGui import QIcon, QEnterEvent
+from PyQt6.QtGui import QIcon, QEnterEvent, QFont
 from PyQt6 import QtCore
 from .utils import debug
 
@@ -136,6 +136,14 @@ class NodeWidget(QWidget, Generic[DataItemT]):
 
         self.clp_btn.clicked.connect(self.onCollapseClicked)
         self.cb.stateChanged.connect(lambda _: self.onCheckChange(self.cb.isChecked()))
+
+        ccl_font = self._parent.getFont()
+        if ccl_font:
+            self.setFont(ccl_font)
+
+    def setFont(self, a0: QFont) -> None:
+        self.lbl.setFont(a0)
+        return super().setFont(a0)
 
     def enterEvent(self, event: QEnterEvent) -> None:
         self._parent.onHoverEnter.emit(self.data)

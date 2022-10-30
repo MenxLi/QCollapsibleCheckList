@@ -1,6 +1,8 @@
 from __future__ import annotations
 from typing import Dict, Generic, List, overload,  Optional
 
+from PyQt6.QtGui import QFont
+
 from .utils import debug
 from .nodeWidget import NodeWidget, NodeVlayout
 from .dataModel import DataGraph, DataItemAbstract, GraphNode, DataItemT, uidT
@@ -25,6 +27,8 @@ class CollapsibleCheckList(QWidget, Generic[DataItemT]):
 
     onCollapseNodeWidget = QtCore.pyqtSignal(NodeWidget)
     onUnCollapseNodeWidget = QtCore.pyqtSignal(NodeWidget)
+
+    _font: Optional[QFont] = None
 
     def __init__(self, parent = None, init_items: List[DataItemT] = [], init_check_status : Optional[List[bool]] = None) -> None:
         super().__init__(parent)
@@ -86,6 +90,16 @@ class CollapsibleCheckList(QWidget, Generic[DataItemT]):
         wid = NodeWidget(self, node)
         self.shown_item_wids[node.value.dataitem_uid].append(wid)
         return wid
+
+    def setFont(self, a0: QFont) -> None:
+        self._font = a0
+        for v in self.shown_item_wids.values():
+            for wid in v:
+                wid.setFont(a0)
+        return super().setFont(a0)
+
+    def getFont(self) -> Optional[QFont]:
+        return self._font
 
     def addItem(self, i: DataItemT, check_status: bool = False) -> bool:
         """
