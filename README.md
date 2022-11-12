@@ -25,7 +25,7 @@ class <YOURCLASS>(DataItemAbstract):
         ...
     
     # Data shown on the widget as text
-    def toString(self, data: <YOURCLASS>) -> str:
+    def toString(self) -> str:
         ...
 
 init_data: List[<YOURCLASS>]
